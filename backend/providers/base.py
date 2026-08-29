@@ -1,8 +1,17 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 from backend.models import WordClue
+
+
+@dataclass
+class GenerateResult:
+    words: list[WordClue] = field(default_factory=list)
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+    total_tokens: int | None = None
 
 
 class BaseProvider(ABC):
     @abstractmethod
-    async def generate_words(self, topic: str, count: int, max_length: int) -> list[WordClue]:
+    async def generate_words(self, topic: str, count: int, max_length: int) -> GenerateResult:
         ...

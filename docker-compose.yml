@@ -6,4 +6,9 @@ services:
       - "8099:8000"
     env_file:
       - .env
+    volumes:
+      - crossword-data:/app/data
     restart: unless-stopped
+
+volumes:
+  crossword-data:

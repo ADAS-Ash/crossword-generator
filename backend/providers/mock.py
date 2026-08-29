@@ -1,4 +1,4 @@
-from .base import BaseProvider
+from .base import BaseProvider, GenerateResult
 from backend.models import WordClue
 
 MOCK_TOPICS: dict[str, list[dict[str, str]]] = {
@@ -82,7 +82,7 @@ MOCK_TOPICS: dict[str, list[dict[str, str]]] = {
 
 
 class MockProvider(BaseProvider):
-    async def generate_words(self, topic: str, count: int, max_length: int) -> list[WordClue]:
+    async def generate_words(self, topic: str, count: int, max_length: int) -> GenerateResult:
         topic_lower = topic.lower()
         pairs = None
         for key in MOCK_TOPICS:
@@ -94,4 +94,5 @@ class MockProvider(BaseProvider):
 
         filtered = [p for p in pairs if len(p["word"]) <= max_length]
         selected = filtered[:count]
-        return [WordClue(word=p["word"].upper(), clue=p["clue"]) for p in selected]
+        words = [WordClue(word=p["word"].upper(), clue=p["clue"]) for p in selected]
+        return GenerateResult(words=words)

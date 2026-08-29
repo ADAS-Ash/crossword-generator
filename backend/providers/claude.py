@@ -1,7 +1,7 @@
 import json
 import re
 import anthropic
-from .base import BaseProvider
+from .base import BaseProvider, GenerateResult
 from backend.models import WordClue
 
 PROMPT_TEMPLATE = """Generate exactly {count} words and crossword-style clues about the topic: "{topic}".
@@ -20,7 +20,7 @@ class ClaudeProvider(BaseProvider):
             raise ValueError("ANTHROPIC_API_KEY is required for Claude provider")
         self.client = anthropic.Anthropic(api_key=api_key)
 
-    async def generate_words(self, topic: str, count: int, max_length: int) -> list[WordClue]:
+    async def generate_words(self, topic: str, count: int, max_length: int) -> GenerateResult:
         prompt = PROMPT_TEMPLATE.format(topic=topic, count=count, max_length=max_length)
 
         message = self.client.messages.create(
@@ -28,6 +28,10 @@ class ClaudeProvider(BaseProvider):
             max_tokens=2048,
             messages=[{"role": "user", "content": prompt}],
         )
+
+        prompt_tokens = getattr(message.usage, "input_tokens", None)
+        completion_tokens = getattr(message.usage, "output_tokens", None)
+        total_tokens = (prompt_tokens or 0) + (completion_tokens or 0) if prompt_tokens or completion_tokens else None
 
         text = message.content[0].text.strip()
         match = re.search(r"\[.*\]", text, re.DOTALL)
@@ -42,4 +46,9 @@ class ClaudeProvider(BaseProvider):
             if word.isalpha() and 3 <= len(word) <= max_length and clue:
                 results.append(WordClue(word=word, clue=clue))
 
-        return results[:count]
+        return GenerateResult(
+            words=results[:count],
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens,
+        )
