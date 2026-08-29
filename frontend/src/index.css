@@ -1,0 +1,101 @@
+:root {
+  --bg: #f8f9fa;
+  --bg-secondary: #ffffff;
+  --fg: #1a1a2e;
+  --fg-muted: #6c757d;
+  --border: #dee2e6;
+  --cell-bg: #ffffff;
+  --cell-border: #999999;
+  --cell-selected: #a8d8ff;
+  --cell-highlighted: #d4edff;
+  --cell-correct: #d4edda;
+  --cell-incorrect: #f8d7da;
+  --cell-revealed: #fff3cd;
+  --clue-active: #e8f4fd;
+  --accent: #0066cc;
+  --accent-hover: #0052a3;
+  --button-bg: #ffffff;
+  --button-border: #dee2e6;
+  --button-hover: #e9ecef;
+  --shadow: rgba(0, 0, 0, 0.08);
+  --radius: 8px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1117;
+    --bg-secondary: #161b22;
+    --fg: #e6edf3;
+    --fg-muted: #8b949e;
+    --border: #30363d;
+    --cell-bg: #1c2128;
+    --cell-border: #8b949e;
+    --cell-selected: #1a4a7a;
+    --cell-highlighted: #122d4f;
+    --cell-correct: #1a3a2a;
+    --cell-incorrect: #4a1a1a;
+    --cell-revealed: #3a2e1a;
+    --clue-active: #1a2d40;
+    --accent: #58a6ff;
+    --accent-hover: #79b8ff;
+    --button-bg: #21262d;
+    --button-border: #30363d;
+    --button-hover: #30363d;
+    --shadow: rgba(0, 0, 0, 0.3);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0d1117;
+  --bg-secondary: #161b22;
+  --fg: #e6edf3;
+  --fg-muted: #8b949e;
+  --border: #30363d;
+  --cell-bg: #1c2128;
+  --cell-border: #8b949e;
+  --cell-selected: #1a4a7a;
+  --cell-highlighted: #122d4f;
+  --cell-correct: #1a3a2a;
+  --cell-incorrect: #4a1a1a;
+  --cell-revealed: #3a2e1a;
+  --clue-active: #1a2d40;
+  --accent: #58a6ff;
+  --accent-hover: #79b8ff;
+  --button-bg: #21262d;
+  --button-border: #30363d;
+  --button-hover: #30363d;
+  --shadow: rgba(0, 0, 0, 0.3);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.5;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--accent);
+  color: white;
+}

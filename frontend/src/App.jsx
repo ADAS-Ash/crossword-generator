@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { generateCrossword } from './api/crossword'
 import { useCrossword } from './hooks/useCrossword'
 import { useKeyboardNav } from './hooks/useKeyboardNav'
@@ -17,6 +17,7 @@ function App() {
   const { isDark, toggleTheme } = useTheme()
   const timer = useTimer()
 
+  const gridRef = useRef(null)
   const crossword = useCrossword()
   const { handleKeyDown } = useKeyboardNav({
     selectedCell: crossword.selectedCell,
@@ -25,6 +26,7 @@ function App() {
     userGrid: crossword.userGrid,
     setCellValue: crossword.setCellValue,
     moveToNextCell: crossword.moveToNextCell,
+    moveToNextEmptyInWord: crossword.moveToNextEmptyInWord,
     moveToPrevCell: crossword.moveToPrevCell,
     moveDirection: crossword.moveDirection,
     selectNextClue: crossword.selectNextClue,
@@ -76,7 +78,11 @@ function App() {
             onTimerToggle={timer.toggle}
             onRevealLetter={crossword.revealLetter}
             onRevealWord={crossword.revealWord}
+            onRevealAll={crossword.revealAll}
+            onClearWord={crossword.clearWord}
+            onCheckWord={crossword.checkWord}
             onCheckAnswers={crossword.checkAnswers}
+            gridRef={gridRef}
             isDark={isDark}
             onToggleTheme={toggleTheme}
             isComplete={crossword.isComplete}
@@ -86,6 +92,7 @@ function App() {
             <div className="app__grid-container">
               <LoadingOverlay isLoading={isLoading} />
               <CrosswordGrid
+                ref={gridRef}
                 puzzle={crossword.puzzle}
                 userGrid={crossword.userGrid}
                 selectedCell={crossword.selectedCell}

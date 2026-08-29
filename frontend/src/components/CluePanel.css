@@ -1,0 +1,72 @@
+.clue-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.clue-section__title {
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--accent);
+}
+
+.clue-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.clue-item {
+  display: flex;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.clue-item:hover {
+  background: var(--button-hover);
+}
+
+.clue-item--active {
+  background: var(--clue-active);
+  font-weight: 500;
+}
+
+.clue-item__number {
+  font-weight: 700;
+  min-width: 24px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.clue-item__text {
+  color: var(--fg);
+}
+
+@media (max-width: 768px) {
+  .clue-panel {
+    max-height: none;
+    flex-direction: row;
+    gap: 16px;
+    overflow-y: visible;
+    padding-right: 0;
+  }
+
+  .clue-section {
+    flex: 1;
+    min-width: 0;
+  }
+}

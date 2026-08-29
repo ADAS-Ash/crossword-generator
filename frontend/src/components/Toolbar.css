@@ -1,0 +1,147 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.toolbar__left,
+.toolbar__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.toolbar__btn {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+  border-radius: var(--radius);
+  color: var(--fg);
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.toolbar__btn:hover {
+  background: var(--button-hover);
+  transform: translateY(-1px);
+}
+
+.toolbar__btn:active {
+  transform: translateY(0);
+}
+
+.toolbar__btn--primary {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.toolbar__btn--primary:hover {
+  background: var(--accent-hover);
+}
+
+.toolbar__btn--danger {
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.toolbar__btn--danger:hover {
+  background: #dc3545;
+  color: white;
+}
+
+.toolbar__btn--icon {
+  padding: 6px 10px;
+  font-size: 16px;
+}
+
+.toolbar__confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.15s ease;
+  backdrop-filter: blur(2px);
+}
+
+.toolbar__confirm {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 32px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: popIn 0.2s ease;
+}
+
+.toolbar__confirm-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--fg);
+}
+
+.toolbar__confirm-text {
+  font-size: 14px;
+  color: var(--fg-muted);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.toolbar__confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.toolbar__complete {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--cell-correct);
+  padding: 8px 20px;
+  border-radius: var(--radius);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--fg);
+  animation: popIn 0.3s ease;
+  pointer-events: none;
+}
+
+@keyframes popIn {
+  0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 600px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar__left,
+  .toolbar__right {
+    justify-content: center;
+  }
+
+  .toolbar__confirm-actions {
+    flex-direction: column;
+  }
+}

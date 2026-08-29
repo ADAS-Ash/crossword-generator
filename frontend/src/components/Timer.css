@@ -1,0 +1,29 @@
+.timer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timer__display {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 600;
+  min-width: 60px;
+  text-align: center;
+  color: var(--fg);
+}
+
+.timer__button {
+  padding: 4px 8px;
+  font-size: 14px;
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+  border-radius: 4px;
+  color: var(--fg);
+  line-height: 1;
+  transition: background-color 0.15s ease;
+}
+
+.timer__button:hover {
+  background: var(--button-hover);
+}
