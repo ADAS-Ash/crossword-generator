@@ -1,0 +1,9 @@
+services:
+  crossword:
+    build: .
+    container_name: crossword-generator
+    ports:
+      - "8099:8000"
+    env_file:
+      - .env
+    restart: unless-stopped
