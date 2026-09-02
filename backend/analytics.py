@@ -1,4 +1,7 @@
+import json
+import secrets
 import sqlite3
+import string
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,6 +39,13 @@ def _init_db(conn: sqlite3.Connection):
     """)
     conn.execute("""
         CREATE INDEX IF NOT EXISTS idx_gen_created ON generations(created_at)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS puzzles (
+            puzzle_id TEXT PRIMARY KEY,
+            created_at TEXT NOT NULL,
+            data TEXT NOT NULL
+        )
     """)
     conn.commit()
 
@@ -186,3 +196,31 @@ def get_stats() -> dict:
             for r in recent
         ],
     }
+
+
+_ID_CHARS = string.ascii_lowercase + string.digits
+
+
+def _generate_id(length: int = 8) -> str:
+    return "".join(secrets.choice(_ID_CHARS) for _ in range(length))
+
+
+def save_puzzle(puzzle_data: dict) -> str:
+    conn = _get_conn()
+    puzzle_id = _generate_id()
+    conn.execute(
+        "INSERT INTO puzzles (puzzle_id, created_at, data) VALUES (?, ?, ?)",
+        (puzzle_id, datetime.now(timezone.utc).isoformat(), json.dumps(puzzle_data)),
+    )
+    conn.commit()
+    return puzzle_id
+
+
+def load_puzzle(puzzle_id: str) -> dict | None:
+    conn = _get_conn()
+    row = conn.execute(
+        "SELECT data FROM puzzles WHERE puzzle_id = ?", (puzzle_id,)
+    ).fetchone()
+    if not row:
+        return None
+    return json.loads(row[0])

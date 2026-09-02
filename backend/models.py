@@ -34,3 +34,4 @@ class GenerateResponse(BaseModel):
     grid: list[list[str]]
     words: list[WordEntry]
     metadata: PuzzleMetadata
+    puzzle_id: str | None = None

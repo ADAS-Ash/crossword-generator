@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef } from 'react'
-import { generateCrossword } from './api/crossword'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { generateCrossword, loadPuzzleById } from './api/crossword'
 import { useCrossword } from './hooks/useCrossword'
 import { useKeyboardNav } from './hooks/useKeyboardNav'
 import { useTimer } from './hooks/useTimer'
@@ -42,6 +42,9 @@ function App() {
     try {
       const data = await generateCrossword(topic, gridSize)
       crossword.loadPuzzle(data)
+      if (data.puzzle_id) {
+        window.history.pushState(null, '', `/p/${data.puzzle_id}`)
+      }
       timer.start()
     } catch (err) {
       setError(err.message)
@@ -49,6 +52,25 @@ function App() {
       setIsLoading(false)
     }
   }, [crossword, timer])
+
+  useEffect(() => {
+    const match = window.location.pathname.match(/^\/p\/([a-z0-9]+)$/)
+    if (!match) return
+    const puzzleId = match[1]
+    setIsLoading(true)
+    loadPuzzleById(puzzleId)
+      .then(data => {
+        if (data) {
+          data.puzzle_id = puzzleId
+          crossword.loadPuzzle(data)
+          timer.start()
+        } else {
+          setError('Puzzle not found')
+        }
+      })
+      .catch(err => setError(err.message))
+      .finally(() => setIsLoading(false))
+  }, [])
 
   return (
     <div className="app">

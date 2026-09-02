@@ -58,9 +58,11 @@ function downloadGridAsImage(gridRef, puzzle) {
   }
   clueHeight += 20
 
+  const brandingHeight = 36
   const titleHeight = 50
+  const footerHeight = 40
   const totalWidth = padding + gridWidth + 30 + clueWidth + padding
-  const totalHeight = titleHeight + Math.max(gridHeight, clueHeight) + padding * 2
+  const totalHeight = brandingHeight + titleHeight + Math.max(gridHeight, clueHeight) + padding * 2 + footerHeight
 
   const canvas = document.createElement('canvas')
   canvas.width = totalWidth * 2
@@ -71,14 +73,22 @@ function downloadGridAsImage(gridRef, puzzle) {
   ctx.fillStyle = '#ffffff'
   ctx.fillRect(0, 0, totalWidth, totalHeight)
 
+  ctx.fillStyle = '#0066cc'
+  ctx.font = 'bold 16px sans-serif'
+  ctx.textAlign = 'center'
+  ctx.fillText('Crossword Generator', totalWidth / 2, 22)
+  ctx.fillStyle = '#999999'
+  ctx.font = '11px sans-serif'
+  ctx.fillText('by NaikLabs  ·  crosswords.naiklabs.dev', totalWidth / 2, 34)
+
   const topic = puzzle.metadata?.topic || 'Crossword'
   ctx.fillStyle = '#1a1a2e'
   ctx.font = 'bold 20px sans-serif'
   ctx.textAlign = 'center'
-  ctx.fillText(topic.charAt(0).toUpperCase() + topic.slice(1), totalWidth / 2, padding + 24)
+  ctx.fillText(topic.charAt(0).toUpperCase() + topic.slice(1), totalWidth / 2, brandingHeight + padding + 24)
 
   const gridX = padding
-  const gridY = titleHeight + padding
+  const gridY = brandingHeight + titleHeight + padding
 
   cells.forEach((cell, i) => {
     const r = Math.floor(i / cols)
@@ -152,6 +162,24 @@ function downloadGridAsImage(gridRef, puzzle) {
     clueY += 4
   }
 
+  const footerY = totalHeight - footerHeight + 12
+  ctx.fillStyle = '#cccccc'
+  ctx.beginPath()
+  ctx.moveTo(padding, footerY - 8)
+  ctx.lineTo(totalWidth - padding, footerY - 8)
+  ctx.strokeStyle = '#e0e0e0'
+  ctx.lineWidth = 0.5
+  ctx.stroke()
+
+  const now = new Date()
+  const dateStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+  const wordsPlaced = puzzle.metadata?.words_placed || 0
+  const gridSz = puzzle.metadata?.grid_size || cols
+  ctx.fillStyle = '#999999'
+  ctx.font = '10px sans-serif'
+  ctx.textAlign = 'center'
+  ctx.fillText(`${gridSz}×${gridSz}  ·  ${wordsPlaced} words  ·  Generated ${dateStr}  ·  crosswords.naiklabs.dev`, totalWidth / 2, footerY + 8)
+
   const link = document.createElement('a')
   link.download = `crossword-${(topic || 'puzzle').replace(/\s+/g, '-').toLowerCase()}.png`
   link.href = canvas.toDataURL('image/png')
@@ -166,6 +194,7 @@ export function Toolbar({
   isDark, onToggleTheme, isComplete, gridRef,
 }) {
   const [showRevealConfirm, setShowRevealConfirm] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const handleRevealAll = useCallback(() => {
     setShowRevealConfirm(true)
@@ -179,6 +208,15 @@ export function Toolbar({
   const handleDownload = useCallback(() => {
     downloadGridAsImage(gridRef, puzzle)
   }, [gridRef, puzzle])
+
+  const handleShare = useCallback(() => {
+    if (!puzzle?.puzzle_id) return
+    const url = `${window.location.origin}/p/${puzzle.puzzle_id}`
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }, [puzzle])
 
   return (
     <div className="toolbar">
@@ -216,6 +254,11 @@ export function Toolbar({
         <button className="toolbar__btn toolbar__btn--icon" onClick={handleDownload} title="Download as image">
           📥
         </button>
+        {puzzle?.puzzle_id && (
+          <button className="toolbar__btn toolbar__btn--icon" onClick={handleShare} title={copied ? 'Link copied!' : 'Copy share link'}>
+            {copied ? '✅' : '🔗'}
+          </button>
+        )}
         <button
           className="toolbar__btn toolbar__btn--icon"
           onClick={onToggleTheme}

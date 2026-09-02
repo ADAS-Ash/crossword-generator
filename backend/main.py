@@ -11,7 +11,7 @@ from backend.config import settings
 from backend.models import GenerateRequest, GenerateResponse, WordEntry, PuzzleMetadata
 from backend.generator import CrosswordGenerator
 from backend.providers import get_provider
-from backend.analytics import log_generation, get_stats
+from backend.analytics import log_generation, get_stats, save_puzzle, load_puzzle
 
 app = FastAPI(title="Crossword Generator API")
 
@@ -105,7 +105,7 @@ async def generate_crossword(request: GenerateRequest):
         total_tokens=result.total_tokens,
     )
 
-    return GenerateResponse(
+    response = GenerateResponse(
         grid=grid,
         words=words,
         metadata=PuzzleMetadata(
@@ -116,6 +116,21 @@ async def generate_crossword(request: GenerateRequest):
             provider=settings.llm_provider,
         ),
     )
+
+    puzzle_id = save_puzzle(response.model_dump())
+    response.puzzle_id = puzzle_id
+
+    return response
+
+
+@app.get("/api/puzzle/{puzzle_id}")
+async def get_puzzle(puzzle_id: str):
+    if len(puzzle_id) > 16 or not puzzle_id.isalnum():
+        raise HTTPException(status_code=400, detail="Invalid puzzle ID")
+    data = load_puzzle(puzzle_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Puzzle not found")
+    return data
 
 
 @app.get("/api/stats")
