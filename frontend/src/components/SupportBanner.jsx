@@ -17,8 +17,10 @@ export function SupportBanner({ show }) {
       >
         &times;
       </button>
+      <div className="support-banner__icon">☕</div>
+      <h3 className="support-banner__heading">Enjoyed this puzzle?</h3>
       <p className="support-banner__text">
-        Enjoyed this puzzle? Help keep the crosswords coming!
+        Each puzzle costs real money in AI inference. Help keep the crosswords free for everyone!
       </p>
       <a
         className="support-banner__btn"
@@ -26,8 +28,11 @@ export function SupportBanner({ show }) {
         target="_blank"
         rel="noopener noreferrer"
       >
-        ☕ Buy me a coffee
+        Buy me a coffee
       </a>
+      <p className="support-banner__subtext">
+        Or bring your own API key in <strong>Settings</strong> ⚙️ for unlimited puzzles
+      </p>
     </div>
   )
 }

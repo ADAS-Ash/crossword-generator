@@ -197,10 +197,16 @@ function App() {
       )}
 
       <footer className="app__footer">
+        <a
+          className="app__footer-bmc"
+          href="https://buymeacoffee.com/naiklabs"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          ☕ Support this project
+        </a>
         <p>
           Powered by <a href="https://naiklabs.dev" target="_blank" rel="noopener">NaikLabs</a>
-          <span className="app__footer-sep"> · </span>
-          <a href="https://buymeacoffee.com/naiklabs" target="_blank" rel="noopener noreferrer">☕ Support</a>
         </p>
       </footer>
 
