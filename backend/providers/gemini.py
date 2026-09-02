@@ -1,6 +1,7 @@
 import json
 import re
 from google import genai
+from google.genai import types
 from .base import BaseProvider, GenerateResult
 from backend.models import WordClue
 
@@ -13,6 +14,32 @@ Rules:
 - Do not repeat words
 - Return ONLY a JSON array: [{{"word": "EXAMPLE", "clue": "A sample instance"}}]"""
 
+GROUNDED_PROMPT_TEMPLATE = """You have access to Google Search. Use it to find accurate, up-to-date information about: "{topic}"
+
+Based ONLY on verified facts from your search results, generate exactly {count} words and crossword-style clues.
+
+Rules:
+- Words must be single words (no spaces or hyphens), 3 to {max_length} letters long
+- Use only uppercase A-Z letters (for names like O'Brien, use OBRIEN)
+- Clues should be concise (under 80 characters), in standard crossword style
+- Only include facts you can verify from search results — do NOT guess or hallucinate
+- Do not repeat words
+- Return ONLY a JSON array: [{{"word": "EXAMPLE", "clue": "A sample instance"}}]"""
+
+GROUNDING_KEYWORDS = [
+    "2024", "2025", "2026", "2027",
+    "current", "latest", "recent", "today",
+    "this year", "this season", "this summer", "this winter",
+    "transfer", "signed", "elected", "announced",
+    "new release", "just released", "premiered",
+    "who won", "who is",
+]
+
+
+def _needs_grounding(topic: str) -> bool:
+    topic_lower = topic.lower()
+    return any(kw in topic_lower for kw in GROUNDING_KEYWORDS)
+
 
 class GeminiProvider(BaseProvider):
     def __init__(self, api_key: str):
@@ -21,15 +48,29 @@ class GeminiProvider(BaseProvider):
         self.client = genai.Client(api_key=api_key)
 
     async def generate_words(self, topic: str, count: int, max_length: int) -> GenerateResult:
-        prompt = PROMPT_TEMPLATE.format(topic=topic, count=count, max_length=max_length)
+        use_grounding = _needs_grounding(topic)
 
-        response = self.client.models.generate_content(
-            model="gemini-3.6-flash",
-            contents=prompt,
-            config={
-                "response_mime_type": "application/json",
-            },
-        )
+        if use_grounding:
+            prompt = GROUNDED_PROMPT_TEMPLATE.format(
+                topic=topic, count=count, max_length=max_length,
+            )
+            config = types.GenerateContentConfig(
+                tools=[types.Tool(google_search=types.GoogleSearch())],
+            )
+            response = self.client.models.generate_content(
+                model="gemini-3.6-flash",
+                contents=prompt,
+                config=config,
+            )
+        else:
+            prompt = PROMPT_TEMPLATE.format(
+                topic=topic, count=count, max_length=max_length,
+            )
+            response = self.client.models.generate_content(
+                model="gemini-3.6-flash",
+                contents=prompt,
+                config={"response_mime_type": "application/json"},
+            )
 
         prompt_tokens = None
         completion_tokens = None
@@ -59,4 +100,5 @@ class GeminiProvider(BaseProvider):
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
             total_tokens=total_tokens,
+            grounded=use_grounding,
         )

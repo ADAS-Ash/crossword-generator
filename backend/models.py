@@ -28,6 +28,7 @@ class PuzzleMetadata(BaseModel):
     words_placed: int
     words_requested: int
     provider: str
+    grounded: bool = False
 
 
 class GenerateResponse(BaseModel):

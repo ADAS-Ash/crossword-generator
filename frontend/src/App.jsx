@@ -164,6 +164,9 @@ function App() {
             <span>Theme: {crossword.puzzle.metadata.topic}</span>
             <span>Words: {crossword.puzzle.metadata.words_placed}</span>
             <span>Provider: {crossword.puzzle.metadata.provider}</span>
+            {crossword.puzzle.metadata.grounded && (
+              <span className="app__meta-grounded">Verified with Google Search</span>
+            )}
           </div>
         </>
       )}

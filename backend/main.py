@@ -114,6 +114,7 @@ async def generate_crossword(request: GenerateRequest):
             words_placed=len(gen.placed_words),
             words_requested=request.word_count,
             provider=settings.llm_provider,
+            grounded=result.grounded,
         ),
     )
 
