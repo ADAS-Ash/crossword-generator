@@ -1,0 +1,839 @@
+<title>Crossword Generator Demo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #141929;
+    --border: #1e2540;
+    --fg: #e2e8f0;
+    --fg-muted: #64748b;
+    --accent: #3b82f6;
+    --accent-dim: rgba(59, 130, 246, 0.15);
+    --green: #22c55e;
+    --cell-bg: #f8fafc;
+    --cell-black: #0a0e1a;
+    --cell-border: #94a3b8;
+    --cell-number: #475569;
+    --cell-letter: #0f172a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  .reel {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+  }
+
+  .frame {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    pointer-events: none;
+    padding: 40px 24px;
+  }
+  .frame.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Frame 1: Intro */
+  .intro-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  .frame.active .intro-eyebrow {
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .intro-title {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: clamp(42px, 7vw, 72px);
+    font-weight: 400;
+    line-height: 1.05;
+    text-align: center;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  .frame.active .intro-title {
+    animation: fadeUp 0.8s 0.6s ease both;
+  }
+  .intro-title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .intro-sub {
+    font-size: 16px;
+    color: var(--fg-muted);
+    text-align: center;
+    max-width: 400px;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  .frame.active .intro-sub {
+    animation: fadeUp 0.6s 1.0s ease both;
+  }
+
+  /* Frame 2: Topic typing */
+  .mock-input-wrap {
+    width: min(560px, 90vw);
+    margin-bottom: 32px;
+  }
+
+  .mock-header {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: 28px;
+    text-align: center;
+    margin-bottom: 28px;
+    opacity: 0;
+  }
+  .frame.active .mock-header {
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .mock-input {
+    width: 100%;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--fg);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .mock-input.typing {
+    border-color: var(--accent);
+  }
+
+  .mock-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: var(--accent);
+    margin-left: 1px;
+    vertical-align: text-bottom;
+    animation: blink 0.7s step-end infinite;
+  }
+
+  .mock-btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+    opacity: 0;
+  }
+  .frame.active .mock-btn-row {
+    animation: fadeUp 0.4s 0.5s ease both;
+  }
+
+  .mock-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: default;
+    transition: transform 0.15s;
+  }
+  .mock-btn--primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .mock-btn--secondary {
+    background: var(--surface);
+    color: var(--fg);
+    border: 1px solid var(--border);
+  }
+  .mock-btn.pulse {
+    animation: btnPulse 0.4s ease;
+  }
+
+  /* Frame 3: Loading */
+  .loading-wrap {
+    text-align: center;
+  }
+  .loading-topic {
+    font-size: 13px;
+    color: var(--fg-muted);
+    margin-bottom: 24px;
+    letter-spacing: 0.03em;
+    opacity: 0;
+  }
+  .frame.active .loading-topic {
+    animation: fadeUp 0.4s 0.2s ease both;
+  }
+
+  .loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    opacity: 0;
+  }
+  .frame.active .loading-spinner {
+    animation: fadeIn 0.3s 0.1s ease both, spin 0.8s 0.1s linear infinite;
+  }
+
+  .loading-text {
+    font-size: 15px;
+    font-weight: 500;
+    opacity: 0;
+  }
+  .frame.active .loading-text {
+    animation: fadeUp 0.4s 0.3s ease both;
+  }
+
+  .loading-detail {
+    font-size: 12px;
+    color: var(--fg-muted);
+    margin-top: 8px;
+    opacity: 0;
+  }
+  .frame.active .loading-detail {
+    animation: fadeUp 0.4s 0.5s ease both;
+  }
+
+  /* Frame 4: Puzzle reveal */
+  .puzzle-frame {
+    gap: 0;
+    padding: 20px;
+  }
+
+  .puzzle-topic {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: clamp(18px, 3vw, 24px);
+    text-align: center;
+    margin-bottom: 4px;
+    opacity: 0;
+  }
+  .frame.active .puzzle-topic {
+    animation: fadeUp 0.5s 0.2s ease both;
+  }
+
+  .puzzle-meta {
+    font-size: 11px;
+    color: var(--fg-muted);
+    text-align: center;
+    margin-bottom: 16px;
+    letter-spacing: 0.04em;
+    opacity: 0;
+  }
+  .frame.active .puzzle-meta {
+    animation: fadeUp 0.4s 0.4s ease both;
+  }
+
+  .puzzle-layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    max-width: 820px;
+    width: 100%;
+  }
+
+  .grid-container {
+    flex-shrink: 0;
+    opacity: 0;
+  }
+  .frame.active .grid-container {
+    animation: fadeIn 0.5s 0.6s ease both;
+  }
+
+  .grid {
+    display: grid;
+    gap: 0;
+    border: 2px solid var(--cell-border);
+  }
+
+  .grid .c {
+    width: clamp(24px, 3.2vw, 34px);
+    height: clamp(24px, 3.2vw, 34px);
+    background: var(--cell-bg);
+    border: 0.5px solid var(--cell-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    font-family: 'Inter', monospace;
+    font-weight: 700;
+    font-size: clamp(11px, 1.6vw, 16px);
+    color: var(--cell-letter);
+    opacity: 0;
+  }
+  .grid .c.revealed {
+    opacity: 1;
+  }
+  .grid .c.black {
+    background: var(--cell-black);
+    border-color: var(--cell-black);
+    opacity: 1;
+  }
+  #gridEmpty .c {
+    opacity: 1;
+  }
+  .grid .c .n {
+    position: absolute;
+    top: 1px;
+    left: 2px;
+    font-size: clamp(6px, 0.9vw, 8px);
+    font-weight: 600;
+    color: var(--cell-number);
+    line-height: 1;
+  }
+
+  .clues-container {
+    flex: 1;
+    min-width: 0;
+    max-height: 420px;
+    overflow-y: auto;
+    opacity: 0;
+  }
+  .frame.active .clues-container {
+    animation: fadeUp 0.5s 1.8s ease both;
+  }
+
+  .clues-heading {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .clues-heading + .clues-heading {
+    margin-top: 14px;
+  }
+
+  .clue-item {
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--fg-muted);
+    margin-bottom: 5px;
+    padding-left: 0;
+  }
+  .clue-num {
+    font-weight: 600;
+    color: var(--fg);
+    margin-right: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Frame 5: Features */
+  .features-title {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: 32px;
+    text-align: center;
+    margin-bottom: 32px;
+    opacity: 0;
+  }
+  .frame.active .features-title {
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    max-width: 600px;
+    width: 90%;
+  }
+
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 16px;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  .frame.active .feature-card:nth-child(1) { animation: fadeUp 0.5s 0.4s ease both; }
+  .frame.active .feature-card:nth-child(2) { animation: fadeUp 0.5s 0.6s ease both; }
+  .frame.active .feature-card:nth-child(3) { animation: fadeUp 0.5s 0.8s ease both; }
+
+  .feature-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .feature-label {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .feature-desc {
+    font-size: 11px;
+    color: var(--fg-muted);
+    line-height: 1.4;
+  }
+
+  /* Frame 6: CTA */
+  .cta-title {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: clamp(32px, 5vw, 52px);
+    text-align: center;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    opacity: 0;
+  }
+  .frame.active .cta-title {
+    animation: fadeUp 0.7s 0.3s ease both;
+  }
+  .cta-title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .cta-sub {
+    font-size: 15px;
+    color: var(--fg-muted);
+    text-align: center;
+    margin-bottom: 28px;
+    opacity: 0;
+  }
+  .frame.active .cta-sub {
+    animation: fadeUp 0.5s 0.6s ease both;
+  }
+
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 32px;
+    background: var(--accent);
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.15s, box-shadow 0.15s;
+    opacity: 0;
+  }
+  .frame.active .cta-btn {
+    animation: fadeUp 0.5s 0.8s ease both;
+  }
+  .cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+  }
+
+  .cta-url {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--fg-muted);
+    letter-spacing: 0.02em;
+    opacity: 0;
+  }
+  .frame.active .cta-url {
+    animation: fadeUp 0.4s 1.0s ease both;
+  }
+
+  /* Progress bar */
+  .progress {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: var(--accent);
+    transition: width 0.3s ease;
+    z-index: 100;
+  }
+
+  /* Nav dots */
+  .dots {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 100;
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.3s, transform 0.2s;
+  }
+  .dot.active {
+    background: var(--accent);
+    transform: scale(1.4);
+  }
+
+  /* Branding */
+  .brand {
+    position: fixed;
+    top: 16px;
+    left: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--fg-muted);
+    letter-spacing: -0.01em;
+    z-index: 100;
+  }
+  .brand span { font-weight: 400; }
+
+  /* Replay */
+  .replay-hint {
+    position: fixed;
+    bottom: 16px;
+    right: 20px;
+    font-size: 11px;
+    color: var(--fg-muted);
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.5s;
+    cursor: pointer;
+  }
+  .replay-hint.visible { opacity: 1; }
+  .replay-hint:hover { color: var(--fg); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+  @keyframes btnPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.97); }
+    100% { transform: scale(1); }
+  }
+  @keyframes cellReveal {
+    from { opacity: 0; transform: scale(0.7); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @media (max-width: 700px) {
+    .puzzle-layout { flex-direction: column; align-items: center; }
+    .clues-container { max-height: 200px; width: 100%; }
+    .features-grid { grid-template-columns: 1fr; max-width: 280px; }
+    .dots { display: none; }
+  }
+</style>
+
+<div class="brand">naiklabs <span>demo</span></div>
+
+<div class="dots" id="dots"></div>
+<div class="progress" id="progress"></div>
+<div class="replay-hint" id="replay" onclick="restart()">Replay</div>
+
+<div class="reel" id="reel">
+
+  <!-- Frame 1: Intro -->
+  <div class="frame active" data-duration="3500">
+    <div class="intro-eyebrow">Introducing</div>
+    <h1 class="intro-title">Crossword<br>Generator <em>by NaikLabs</em></h1>
+    <p class="intro-sub">AI-powered crossword puzzles on any topic. Type a theme, get a playable puzzle in seconds.</p>
+  </div>
+
+  <!-- Frame 2: Topic input -->
+  <div class="frame" data-duration="5000">
+    <div class="mock-input-wrap">
+      <div class="mock-header">Enter any topic</div>
+      <div class="mock-input" id="typeTarget">
+        <span id="typeText"></span><span class="mock-cursor" id="cursor"></span>
+      </div>
+      <div class="mock-btn-row">
+        <div class="mock-btn mock-btn--primary" id="genBtn">Generate Puzzle</div>
+        <div class="mock-btn mock-btn--secondary">I'm Feeling Lucky</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Frame 3: Loading -->
+  <div class="frame" data-duration="3000">
+    <div class="loading-wrap">
+      <div class="loading-topic">PREMIER LEAGUE TRANSFERS SUMMER 2026</div>
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Generating puzzle...</div>
+      <div class="loading-detail">Powered by Gemini AI + Google Search &middot; 12 words &middot; 15&times;15 grid</div>
+    </div>
+  </div>
+
+  <!-- Frame 4: Empty puzzle (playing state) -->
+  <div class="frame puzzle-frame" data-duration="4000">
+    <div class="puzzle-topic">Premier League Summer Transfers 2026</div>
+    <div class="puzzle-meta">12 WORDS &middot; VERIFIED WITH GOOGLE SEARCH &middot; CROSSWORDS.NAIKLABS.DEV</div>
+    <div class="puzzle-layout">
+      <div class="grid-container" style="opacity:1">
+        <div class="grid" id="gridEmpty" style="grid-template-columns: repeat(15, 1fr)"></div>
+      </div>
+      <div class="clues-container" style="opacity:1">
+        <div class="clues-heading">Across</div>
+        <div class="clue-item"><span class="clue-num">4.</span> French winger who joined Liverpool from PSG</div>
+        <div class="clue-item"><span class="clue-num">5.</span> Wolves midfielder who signed for Aston Villa</div>
+        <div class="clue-item"><span class="clue-num">7.</span> Forest midfielder who signed for Man City</div>
+        <div class="clue-item"><span class="clue-num">10.</span> Newcastle midfielder who signed for Arsenal</div>
+        <div class="clue-item"><span class="clue-num">11.</span> Chelsea striker who moved to Nottingham Forest</div>
+        <div class="clue-item"><span class="clue-num">12.</span> Ecuadorian defender who joined Arsenal</div>
+        <div class="clues-heading">Down</div>
+        <div class="clue-item"><span class="clue-num">1.</span> Aston Villa defender who moved to Arsenal</div>
+        <div class="clue-item"><span class="clue-num">2.</span> Atalanta defender who moved to Chelsea</div>
+        <div class="clue-item"><span class="clue-num">3.</span> Brazilian winger from Man City to Spurs</div>
+        <div class="clue-item"><span class="clue-num">6.</span> Argentine midfielder bought by Man City</div>
+        <div class="clue-item"><span class="clue-num">8.</span> Aston Villa forward who moved to Chelsea for &pound;117m</div>
+        <div class="clue-item"><span class="clue-num">9.</span> Belgian midfielder who signed for Man United</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Frame 5: Revealed puzzle -->
+  <div class="frame puzzle-frame" data-duration="5000">
+    <div class="puzzle-topic">Premier League Summer Transfers 2026</div>
+    <div class="puzzle-meta">12 WORDS &middot; VERIFIED WITH GOOGLE SEARCH &middot; CROSSWORDS.NAIKLABS.DEV</div>
+    <div class="puzzle-layout">
+      <div class="grid-container">
+        <div class="grid" id="grid" style="grid-template-columns: repeat(15, 1fr)"></div>
+      </div>
+      <div class="clues-container">
+        <div class="clues-heading">Across</div>
+        <div class="clue-item"><span class="clue-num">4.</span> French winger who joined Liverpool from PSG</div>
+        <div class="clue-item"><span class="clue-num">5.</span> Wolves midfielder who signed for Aston Villa</div>
+        <div class="clue-item"><span class="clue-num">7.</span> Forest midfielder who signed for Man City</div>
+        <div class="clue-item"><span class="clue-num">10.</span> Newcastle midfielder who signed for Arsenal</div>
+        <div class="clue-item"><span class="clue-num">11.</span> Chelsea striker who moved to Nottingham Forest</div>
+        <div class="clue-item"><span class="clue-num">12.</span> Ecuadorian defender who joined Arsenal</div>
+        <div class="clues-heading">Down</div>
+        <div class="clue-item"><span class="clue-num">1.</span> Aston Villa defender who moved to Arsenal</div>
+        <div class="clue-item"><span class="clue-num">2.</span> Atalanta defender who moved to Chelsea</div>
+        <div class="clue-item"><span class="clue-num">3.</span> Brazilian winger from Man City to Spurs</div>
+        <div class="clue-item"><span class="clue-num">6.</span> Argentine midfielder bought by Man City</div>
+        <div class="clue-item"><span class="clue-num">8.</span> Aston Villa forward who moved to Chelsea for &pound;117m</div>
+        <div class="clue-item"><span class="clue-num">9.</span> Belgian midfielder who signed for Man United</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Frame 6: Features -->
+  <div class="frame" data-duration="4000">
+    <div class="features-title">Built for sharing</div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">&#x1F517;</span>
+        <div class="feature-label">Share Link</div>
+        <div class="feature-desc">Every puzzle gets a unique URL to share with friends</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">&#x1F4F7;</span>
+        <div class="feature-label">Download</div>
+        <div class="feature-desc">Export as a branded PNG with clues and metadata</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">&#x1F3AF;</span>
+        <div class="feature-label">Play & Score</div>
+        <div class="feature-desc">Timer, scoring, hints, and keyboard navigation</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Frame 7: CTA -->
+  <div class="frame" data-duration="5000">
+    <h2 class="cta-title">Try it <em>now</em></h2>
+    <p class="cta-sub">Pick any topic. Get a puzzle in seconds.</p>
+    <a class="cta-btn" href="https://crosswords.naiklabs.dev" target="_blank">Open Crossword Generator &rarr;</a>
+    <div class="cta-url">crosswords.naiklabs.dev</div>
+  </div>
+</div>
+
+<script>
+const GRID_DATA = [[{"b":1},{"b":1},{"b":1},{"b":1},{"l":"K","n":"1"},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"P","n":"2"},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"S","n":"3"}],[{"b":1},{"b":1},{"b":1},{"b":1},{"l":"O"},{"b":1},{"b":1},{"b":1},{"l":"B","n":"4"},{"l":"A"},{"l":"R"},{"l":"C"},{"l":"O"},{"l":"L"},{"l":"A"}],[{"b":1},{"b":1},{"b":1},{"b":1},{"l":"N"},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"L"},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"V"}],[{"l":"G","n":"5"},{"l":"O"},{"l":"M"},{"l":"E"},{"l":"S"},{"b":1},{"b":1},{"l":"F","n":"6"},{"b":1},{"l":"E"},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"I"}],[{"b":1},{"b":1},{"b":1},{"b":1},{"l":"A","n":"7"},{"l":"N"},{"l":"D"},{"l":"E"},{"l":"R"},{"l":"S"},{"l":"O"},{"l":"N"},{"b":1},{"b":1},{"l":"N"}],[{"b":1},{"b":1},{"b":1},{"l":"R","n":"8"},{"b":1},{"b":1},{"b":1},{"l":"R"},{"b":1},{"l":"T"},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"H"}],[{"b":1},{"b":1},{"b":1},{"l":"O"},{"b":1},{"l":"T","n":"9"},{"b":1},{"l":"N"},{"b":1},{"l":"R"},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"O"}],[{"b":1},{"b":1},{"b":1},{"l":"G","n":"10"},{"l":"U"},{"l":"I"},{"l":"M"},{"l":"A"},{"l":"R"},{"l":"A"},{"l":"E"},{"l":"S"},{"b":1},{"b":1},{"b":1}],[{"b":1},{"b":1},{"b":1},{"l":"E"},{"b":1},{"l":"E"},{"b":1},{"l":"N"},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1}],[{"b":1},{"b":1},{"b":1},{"l":"R"},{"b":1},{"l":"L"},{"b":1},{"l":"D","n":"11"},{"l":"E"},{"l":"L"},{"l":"A"},{"l":"P"},{"b":1},{"b":1},{"b":1}],[{"b":1},{"b":1},{"b":1},{"l":"S"},{"b":1},{"l":"E"},{"b":1},{"l":"E"},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1}],[{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"M"},{"b":1},{"l":"Z"},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1}],[{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"A"},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1}],[{"b":1},{"b":1},{"b":1},{"l":"H","n":"12"},{"l":"I"},{"l":"N"},{"l":"C"},{"l":"A"},{"l":"P"},{"l":"I"},{"l":"E"},{"b":1},{"b":1},{"b":1},{"b":1}],[{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"S"},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1}]];
+
+const TOPIC = "Premier League players that transferred during summer 2026";
+const frames = document.querySelectorAll('.frame');
+const dotsEl = document.getElementById('dots');
+const progressEl = document.getElementById('progress');
+const replayEl = document.getElementById('replay');
+let current = 0;
+let timer = null;
+
+// Build dots
+frames.forEach((_, i) => {
+  const d = document.createElement('button');
+  d.className = 'dot' + (i === 0 ? ' active' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+});
+
+// Build empty grid (Frame 4 - no letters shown)
+const gridEmptyEl = document.getElementById('gridEmpty');
+GRID_DATA.forEach((row) => {
+  row.forEach((cell) => {
+    const div = document.createElement('div');
+    div.className = 'c' + (cell.b ? ' black' : '');
+    if (cell.n) {
+      const numSpan = document.createElement('span');
+      numSpan.className = 'n';
+      numSpan.textContent = cell.n;
+      div.appendChild(numSpan);
+    }
+    gridEmptyEl.appendChild(div);
+  });
+});
+
+// Build revealed grid (Frame 5 - letters animate in)
+const gridEl = document.getElementById('grid');
+const letterCells = [];
+GRID_DATA.forEach((row, ri) => {
+  row.forEach((cell, ci) => {
+    const div = document.createElement('div');
+    div.className = 'c' + (cell.b ? ' black' : '');
+    if (cell.n) {
+      const numSpan = document.createElement('span');
+      numSpan.className = 'n';
+      numSpan.textContent = cell.n;
+      div.appendChild(numSpan);
+    }
+    if (cell.l) {
+      div.dataset.letter = cell.l;
+      letterCells.push({ el: div, r: ri, c: ci });
+    }
+    gridEl.appendChild(div);
+  });
+});
+
+function goTo(index) {
+  if (timer) clearTimeout(timer);
+  frames[current].classList.remove('active');
+  current = index;
+  frames[current].classList.add('active');
+
+  // Update dots
+  dotsEl.querySelectorAll('.dot').forEach((d, i) => {
+    d.classList.toggle('active', i === current);
+  });
+
+  // Update progress
+  progressEl.style.width = ((current + 1) / frames.length * 100) + '%';
+
+  // Frame-specific actions
+  if (current === 1) startTyping();
+  if (current === 4) revealGrid();
+  if (current === frames.length - 1) {
+    replayEl.classList.add('visible');
+  } else {
+    replayEl.classList.remove('visible');
+  }
+
+  // Auto-advance
+  const dur = parseInt(frames[current].dataset.duration) || 4000;
+  if (current < frames.length - 1) {
+    timer = setTimeout(() => goTo(current + 1), dur);
+  }
+}
+
+function startTyping() {
+  const target = document.getElementById('typeText');
+  const cursor = document.getElementById('cursor');
+  const btn = document.getElementById('genBtn');
+  target.textContent = '';
+  cursor.style.display = 'inline-block';
+  let i = 0;
+  const typeInterval = setInterval(() => {
+    if (i < TOPIC.length) {
+      target.textContent += TOPIC[i];
+      i++;
+    } else {
+      clearInterval(typeInterval);
+      setTimeout(() => {
+        cursor.style.display = 'none';
+        btn.classList.add('pulse');
+        setTimeout(() => btn.classList.remove('pulse'), 400);
+      }, 400);
+    }
+  }, 55);
+}
+
+function revealGrid() {
+  // Sort by position for wave effect
+  const sorted = [...letterCells].sort((a, b) => (a.r + a.c) - (b.r + b.c));
+  sorted.forEach((cell, i) => {
+    cell.el.classList.remove('revealed');
+    cell.el.textContent = '';
+    if (cell.el.querySelector('.n')) {
+      // keep number
+    }
+    setTimeout(() => {
+      // Rebuild cell content
+      cell.el.innerHTML = '';
+      const numSpan = GRID_DATA[cell.r][cell.c].n;
+      if (numSpan) {
+        const ns = document.createElement('span');
+        ns.className = 'n';
+        ns.textContent = numSpan;
+        cell.el.appendChild(ns);
+      }
+      cell.el.appendChild(document.createTextNode(cell.el.dataset.letter));
+      cell.el.classList.add('revealed');
+      cell.el.style.animation = `cellReveal 0.3s ease both`;
+    }, 800 + i * 35);
+  });
+}
+
+function restart() {
+  // Reset grid
+  letterCells.forEach(cell => {
+    cell.el.classList.remove('revealed');
+    cell.el.style.animation = '';
+    cell.el.innerHTML = '';
+    const numSpan = GRID_DATA[cell.r][cell.c].n;
+    if (numSpan) {
+      const ns = document.createElement('span');
+      ns.className = 'n';
+      ns.textContent = numSpan;
+      cell.el.appendChild(ns);
+    }
+  });
+  document.getElementById('typeText').textContent = '';
+  goTo(0);
+}
+
+// Start
+goTo(0);
+</script>

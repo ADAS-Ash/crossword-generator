@@ -1,0 +1,195 @@
+<title>PL Transfers 2026 Crossword</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #0f172a;
+    --fg-muted: #64748b;
+    --cell-bg: #ffffff;
+    --cell-black: #0f172a;
+    --cell-border: #334155;
+    --cell-number: #475569;
+    --accent: #3b82f6;
+    --green: #22c55e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    padding: 32px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .meta {
+    font-size: 12px;
+    color: var(--fg-muted);
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .badge {
+    background: rgba(34, 197, 94, 0.12);
+    color: var(--green);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 11px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(15, 30px);
+    grid-auto-rows: 30px;
+    gap: 0;
+    border: 2px solid var(--cell-black);
+  }
+
+  .c {
+    width: 30px;
+    height: 30px;
+    border: 0.5px solid var(--cell-border);
+    background: var(--cell-bg);
+    position: relative;
+    font-size: 0;
+  }
+
+  .c.black {
+    background: var(--cell-black);
+    border-color: var(--cell-black);
+  }
+
+  .n {
+    position: absolute;
+    top: 1px;
+    left: 2px;
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--cell-number);
+    line-height: 1;
+  }
+
+  .clues {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .clues-heading {
+    font-weight: 700;
+    font-size: 14px;
+    margin-top: 16px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--fg-muted);
+  }
+
+  .clues-heading:first-child {
+    margin-top: 0;
+  }
+
+  .clue-item {
+    margin-bottom: 4px;
+  }
+
+  .clue-num {
+    font-weight: 700;
+    color: var(--accent);
+    margin-right: 4px;
+    min-width: 20px;
+    display: inline-block;
+  }
+
+  .footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 11px;
+    color: var(--fg-muted);
+  }
+
+  .footer a { color: var(--accent); text-decoration: none; }
+
+  @media print {
+    body { padding: 16px; }
+    .grid { grid-template-columns: repeat(15, 24px); grid-auto-rows: 24px; }
+    .c { width: 24px; height: 24px; }
+  }
+</style>
+
+<div class="header">
+  <div class="title">Premier League Summer Transfers 2026</div>
+  <div class="meta">
+    <span>12 words</span>
+    <span>15 &times; 15</span>
+    <span class="badge">Verified with Google Search</span>
+    <span>Crossword Generator by NaikLabs</span>
+  </div>
+</div>
+
+<div class="layout">
+  <div>
+    <div class="grid" id="grid"></div>
+  </div>
+  <div class="clues">
+    <div class="clues-heading">Across</div>
+    <div class="clue-item"><span class="clue-num">4.</span>French winger who joined Liverpool from PSG</div>
+    <div class="clue-item"><span class="clue-num">5.</span>Wolves midfielder who signed for Aston Villa</div>
+    <div class="clue-item"><span class="clue-num">7.</span>Forest midfielder who signed for Man City</div>
+    <div class="clue-item"><span class="clue-num">10.</span>Newcastle midfielder who signed for Arsenal</div>
+    <div class="clue-item"><span class="clue-num">11.</span>Chelsea striker who moved to Nottingham Forest</div>
+    <div class="clue-item"><span class="clue-num">12.</span>Ecuadorian defender who joined Arsenal</div>
+    <div class="clues-heading">Down</div>
+    <div class="clue-item"><span class="clue-num">1.</span>Aston Villa defender who moved to Arsenal</div>
+    <div class="clue-item"><span class="clue-num">2.</span>Atalanta defender who moved to Chelsea</div>
+    <div class="clue-item"><span class="clue-num">3.</span>Brazilian winger from Man City to Spurs</div>
+    <div class="clue-item"><span class="clue-num">6.</span>Argentine midfielder bought by Man City</div>
+    <div class="clue-item"><span class="clue-num">8.</span>Aston Villa forward who moved to Chelsea for &pound;117m</div>
+    <div class="clue-item"><span class="clue-num">9.</span>Belgian midfielder who signed for Man United</div>
+  </div>
+</div>
+
+<div class="footer">
+  <a href="https://crosswords.naiklabs.dev">crosswords.naiklabs.dev</a> &middot; Powered by NaikLabs
+</div>
+
+<script>
+const GRID_DATA = [[{"b":1},{"b":1},{"b":1},{"b":1},{"l":"K","n":"1"},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"P","n":"2"},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"S","n":"3"}],[{"b":1},{"b":1},{"b":1},{"b":1},{"l":"O"},{"b":1},{"b":1},{"b":1},{"l":"B","n":"4"},{"l":"A"},{"l":"R"},{"l":"C"},{"l":"O"},{"l":"L"},{"l":"A"}],[{"b":1},{"b":1},{"b":1},{"b":1},{"l":"N"},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"L"},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"V"}],[{"l":"G","n":"5"},{"l":"O"},{"l":"M"},{"l":"E"},{"l":"S"},{"b":1},{"b":1},{"l":"F","n":"6"},{"b":1},{"l":"E"},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"I"}],[{"b":1},{"b":1},{"b":1},{"b":1},{"l":"A","n":"7"},{"l":"N"},{"l":"D"},{"l":"E"},{"l":"R"},{"l":"S"},{"l":"O"},{"l":"N"},{"b":1},{"b":1},{"l":"N"}],[{"b":1},{"b":1},{"b":1},{"l":"R","n":"8"},{"b":1},{"b":1},{"b":1},{"l":"R"},{"b":1},{"l":"T"},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"H"}],[{"b":1},{"b":1},{"b":1},{"l":"O"},{"b":1},{"l":"T","n":"9"},{"b":1},{"l":"N"},{"b":1},{"l":"R"},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"O"}],[{"b":1},{"b":1},{"b":1},{"l":"G","n":"10"},{"l":"U"},{"l":"I"},{"l":"M"},{"l":"A"},{"l":"R"},{"l":"A"},{"l":"E"},{"l":"S"},{"b":1},{"b":1},{"b":1}],[{"b":1},{"b":1},{"b":1},{"l":"E"},{"b":1},{"l":"E"},{"b":1},{"l":"N"},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1}],[{"b":1},{"b":1},{"b":1},{"l":"R"},{"b":1},{"l":"L"},{"b":1},{"l":"D","n":"11"},{"l":"E"},{"l":"L"},{"l":"A"},{"l":"P"},{"b":1},{"b":1},{"b":1}],[{"b":1},{"b":1},{"b":1},{"l":"S"},{"b":1},{"l":"E"},{"b":1},{"l":"E"},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1}],[{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"M"},{"b":1},{"l":"Z"},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1}],[{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"A"},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1}],[{"b":1},{"b":1},{"b":1},{"l":"H","n":"12"},{"l":"I"},{"l":"N"},{"l":"C"},{"l":"A"},{"l":"P"},{"l":"I"},{"l":"E"},{"b":1},{"b":1},{"b":1},{"b":1}],[{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"l":"S"},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1},{"b":1}]];
+
+const gridEl = document.getElementById('grid');
+GRID_DATA.forEach((row) => {
+  row.forEach((cell) => {
+    const div = document.createElement('div');
+    div.className = 'c' + (cell.b ? ' black' : '');
+    if (cell.n) {
+      const numSpan = document.createElement('span');
+      numSpan.className = 'n';
+      numSpan.textContent = cell.n;
+      div.appendChild(numSpan);
+    }
+    gridEl.appendChild(div);
+  });
+});
+</script>
