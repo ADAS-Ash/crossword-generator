@@ -192,6 +192,7 @@ export function Toolbar({
   onRevealLetter, onRevealWord, onRevealAll,
   onClearWord, onCheckWord, onCheckAnswers,
   isDark, onToggleTheme, isComplete, gridRef,
+  onOpenSettings,
 }) {
   const [showRevealConfirm, setShowRevealConfirm] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -265,6 +266,13 @@ export function Toolbar({
           title={isDark ? 'Light mode' : 'Dark mode'}
         >
           {isDark ? '☀️' : '🌙'}
+        </button>
+        <button
+          className="toolbar__btn toolbar__btn--icon"
+          onClick={onOpenSettings}
+          title="Settings (BYOK)"
+        >
+          ⚙️
         </button>
       </div>
 

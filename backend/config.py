@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     admin_key: str = ""
     grid_size: int = 15
     word_count: int = 20
+    rate_limit_per_day: int = 5
+    adsense_publisher_id: str = ""
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

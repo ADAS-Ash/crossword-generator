@@ -47,7 +47,24 @@
   50% { opacity: 1; transform: scale(1); }
 }
 
+.loading-overlay__support {
+  font-size: 14px;
+  color: var(--fg-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+  animation: fadeInUp 0.5s ease 1.5s both;
+}
+
+.loading-overlay__support:hover {
+  color: var(--accent);
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }

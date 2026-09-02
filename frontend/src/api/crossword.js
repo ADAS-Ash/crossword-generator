@@ -1,7 +1,10 @@
+import { getByokHeaders } from '../components/SettingsModal'
+
 export async function generateCrossword(topic, gridSize = 15, wordCount = 20) {
+  const byokHeaders = getByokHeaders()
   const res = await fetch('/api/generate', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...byokHeaders },
     body: JSON.stringify({ topic, grid_size: gridSize, word_count: wordCount }),
   })
 

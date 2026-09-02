@@ -10,12 +10,16 @@ import { Toolbar } from './components/Toolbar'
 import { CrosswordGrid } from './components/CrosswordGrid'
 import { CluePanel } from './components/CluePanel'
 import { LoadingOverlay } from './components/LoadingOverlay'
+import { SupportBanner } from './components/SupportBanner'
+import { AdSlot } from './components/AdSlot'
+import { SettingsModal } from './components/SettingsModal'
 import './App.css'
 
 function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [showDemos, setShowDemos] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const { isDark, toggleTheme } = useTheme()
   const timer = useTimer()
 
@@ -97,6 +101,8 @@ function App() {
         <TopicForm onGenerate={handleGenerate} isLoading={isLoading} />
       </div>
 
+      <AdSlot slot="FORM_BANNER" format="horizontal" className="ad-slot--form" />
+
       {error && (
         <div className="app__error">
           <p>{error}</p>
@@ -135,6 +141,7 @@ function App() {
             isDark={isDark}
             onToggleTheme={toggleTheme}
             isComplete={crossword.isComplete}
+            onOpenSettings={() => setShowSettings(true)}
           />
 
           <div className="app__puzzle">
@@ -152,12 +159,15 @@ function App() {
                 onKeyDown={handleKeyDown}
               />
             </div>
-            <CluePanel
-              wordsAcross={crossword.wordsAcross}
-              wordsDown={crossword.wordsDown}
-              activeWord={crossword.activeWord}
-              onSelectClue={crossword.selectClue}
-            />
+            <div>
+              <CluePanel
+                wordsAcross={crossword.wordsAcross}
+                wordsDown={crossword.wordsDown}
+                activeWord={crossword.activeWord}
+                onSelectClue={crossword.selectClue}
+              />
+              <AdSlot slot="SIDEBAR_RECT" format="rectangle" className="ad-slot--sidebar" />
+            </div>
           </div>
 
           <div className="app__meta">
@@ -168,6 +178,9 @@ function App() {
               <span className="app__meta-grounded">Verified with Google Search</span>
             )}
           </div>
+
+          <SupportBanner show={crossword.isComplete} />
+          <AdSlot slot="FOOTER_BANNER" format="horizontal" className="ad-slot--footer" />
         </>
       )}
 
@@ -179,13 +192,19 @@ function App() {
 
       {isLoading && !crossword.puzzle && (
         <div className="app__loading-standalone">
-          <LoadingOverlay isLoading={true} />
+          <LoadingOverlay isLoading={true} showSupport={true} />
         </div>
       )}
 
       <footer className="app__footer">
-        <p>Powered by <a href="https://naiklabs.dev" target="_blank" rel="noopener">NaikLabs</a></p>
+        <p>
+          Powered by <a href="https://naiklabs.dev" target="_blank" rel="noopener">NaikLabs</a>
+          <span className="app__footer-sep"> · </span>
+          <a href="https://buymeacoffee.com/naiklabs" target="_blank" rel="noopener noreferrer">☕ Support</a>
+        </p>
       </footer>
+
+      <SettingsModal open={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   )
 }

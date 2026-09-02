@@ -1,6 +1,8 @@
 import './LoadingOverlay.css'
 
-export function LoadingOverlay({ isLoading }) {
+const BMC_URL = 'https://buymeacoffee.com/naiklabs'
+
+export function LoadingOverlay({ isLoading, showSupport = false }) {
   if (!isLoading) return null
 
   return (
@@ -13,6 +15,16 @@ export function LoadingOverlay({ isLoading }) {
           <div className="loading-spinner__cell" />
         </div>
         <p className="loading-overlay__text">Generating your puzzle...</p>
+        {showSupport && (
+          <a
+            className="loading-overlay__support"
+            href={BMC_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            ☕ Buy me a coffee while you wait
+          </a>
+        )}
       </div>
     </div>
   )

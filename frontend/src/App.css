@@ -40,6 +40,10 @@
   text-underline-offset: 3px;
 }
 
+.app__footer-sep {
+  margin: 0 2px;
+}
+
 .app__subtitle {
   font-size: 16px;
   color: var(--fg-muted);
@@ -153,6 +157,8 @@
   min-height: 300px;
   margin-top: 20px;
 }
+
+
 
 @media (max-width: 768px) {
   .app__puzzle {

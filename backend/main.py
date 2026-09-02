@@ -1,8 +1,7 @@
-import os
 import time
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -12,6 +11,7 @@ from backend.models import GenerateRequest, GenerateResponse, WordEntry, PuzzleM
 from backend.generator import CrosswordGenerator
 from backend.providers import get_provider
 from backend.analytics import log_generation, get_stats, save_puzzle, load_puzzle
+from backend.ratelimit import rate_limiter
 
 app = FastAPI(title="Crossword Generator API")
 
@@ -30,8 +30,26 @@ async def health():
 
 
 @app.post("/api/generate", response_model=GenerateResponse)
-async def generate_crossword(request: GenerateRequest):
-    provider = get_provider()
+async def generate_crossword(
+    request: GenerateRequest,
+    req: Request,
+    x_user_api_key: str | None = Header(default=None),
+    x_user_provider: str | None = Header(default=None),
+):
+    is_byok = bool(x_user_api_key and x_user_provider)
+
+    if not is_byok:
+        client_ip = req.client.host if req.client else "unknown"
+        if not rate_limiter.is_allowed(client_ip):
+            raise HTTPException(
+                status_code=429,
+                detail="Daily puzzle limit reached. Add your own API key in Settings for unlimited puzzles, or come back tomorrow!",
+            )
+
+    if is_byok:
+        provider = get_provider(name=x_user_provider, api_key=x_user_api_key)
+    else:
+        provider = get_provider()
     start = time.monotonic()
 
     try:
@@ -122,6 +140,15 @@ async def generate_crossword(request: GenerateRequest):
     response.puzzle_id = puzzle_id
 
     return response
+
+
+@app.get("/api/rate-limit")
+async def get_rate_limit(req: Request):
+    client_ip = req.client.host if req.client else "unknown"
+    return {
+        "limit": settings.rate_limit_per_day,
+        "remaining": rate_limiter.remaining(client_ip),
+    }
 
 
 @app.get("/api/puzzle/{puzzle_id}")
