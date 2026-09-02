@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { generateCrossword, loadPuzzleById } from './api/crossword'
+import { DEMO_PUZZLES } from './data/demoPuzzles'
 import { useCrossword } from './hooks/useCrossword'
 import { useKeyboardNav } from './hooks/useKeyboardNav'
 import { useTimer } from './hooks/useTimer'
@@ -14,6 +15,7 @@ import './App.css'
 function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [showDemos, setShowDemos] = useState(false)
   const { isDark, toggleTheme } = useTheme()
   const timer = useTimer()
 
@@ -48,9 +50,21 @@ function App() {
       timer.start()
     } catch (err) {
       setError(err.message)
+      setShowDemos(true)
     } finally {
       setIsLoading(false)
     }
+  }, [crossword, timer])
+
+  const loadDemo = useCallback((index) => {
+    const demo = DEMO_PUZZLES[index]
+    if (!demo) return
+    setError(null)
+    setShowDemos(false)
+    crossword.loadPuzzle(demo)
+    timer.reset()
+    timer.start()
+    window.history.pushState(null, '', '/')
   }, [crossword, timer])
 
   useEffect(() => {
@@ -86,6 +100,19 @@ function App() {
       {error && (
         <div className="app__error">
           <p>{error}</p>
+          {showDemos && (
+            <div className="app__demos">
+              <p className="app__demos-title">Try a demo puzzle while the service recovers:</p>
+              <div className="app__demos-grid">
+                {DEMO_PUZZLES.map((demo, i) => (
+                  <button key={i} className="app__demo-card" onClick={() => loadDemo(i)}>
+                    <span className="app__demo-topic">{demo.metadata.topic}</span>
+                    <span className="app__demo-meta">{demo.metadata.words_placed} words · {demo.metadata.grid_size}x{demo.metadata.grid_size}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

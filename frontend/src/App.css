@@ -60,6 +60,53 @@
   text-align: center;
 }
 
+.app__demos {
+  margin-top: 16px;
+}
+
+.app__demos-title {
+  font-size: 13px;
+  color: var(--fg-muted);
+  margin-bottom: 12px;
+}
+
+.app__demos-grid {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.app__demo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+  text-align: center;
+  color: var(--fg);
+  font-family: inherit;
+}
+
+.app__demo-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.app__demo-topic {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.app__demo-meta {
+  font-size: 11px;
+  color: var(--fg-muted);
+}
+
 .app__puzzle {
   display: grid;
   grid-template-columns: 1fr 320px;
