@@ -24,7 +24,7 @@ export function AdSlot({ slot, format = 'auto', className = '' }) {
         ref={adRef}
         className="adsbygoogle"
         style={{ display: 'block' }}
-        data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+        data-ad-client="ca-pub-1163230166986964"
         data-ad-slot={slot}
         data-ad-format={format}
         data-full-width-responsive="true"
