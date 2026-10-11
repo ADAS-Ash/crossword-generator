@@ -1,7 +1,9 @@
+import logging
 import time
+import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Header, Request
+from fastapi import FastAPI, HTTPException, Header, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -10,8 +12,15 @@ from backend.config import settings
 from backend.models import GenerateRequest, GenerateResponse, WordEntry, PuzzleMetadata
 from backend.generator import CrosswordGenerator
 from backend.providers import get_provider
+from backend.providers.errors import ProviderError, request_id_var
 from backend.analytics import log_generation, get_stats, save_puzzle, load_puzzle
 from backend.ratelimit import rate_limiter
+
+logging.basicConfig(
+    level=settings.log_level.upper(),
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+logger = logging.getLogger("crossword.api")
 
 app = FastAPI(title="Crossword Generator API")
 
@@ -33,10 +42,20 @@ async def health():
 async def generate_crossword(
     request: GenerateRequest,
     req: Request,
+    resp: Response,
     x_user_api_key: str | None = Header(default=None),
     x_user_provider: str | None = Header(default=None),
 ):
+    request_id = uuid.uuid4().hex[:12]
+    request_id_var.set(request_id)
+    resp.headers["X-Request-ID"] = request_id
+
     is_byok = bool(x_user_api_key and x_user_provider)
+    provider_name = x_user_provider if is_byok else settings.llm_provider
+    logger.info(
+        "generate start rid=%s provider=%s byok=%s topic=%r grid=%d words=%d",
+        request_id, provider_name, is_byok, request.topic, request.grid_size, request.word_count,
+    )
 
     if not is_byok:
         client_ip = req.client.host if req.client else "unknown"
@@ -46,11 +65,32 @@ async def generate_crossword(
                 detail="Daily puzzle limit reached. Add your own API key in Settings for unlimited puzzles, or come back tomorrow!",
             )
 
-    if is_byok:
-        provider = get_provider(name=x_user_provider, api_key=x_user_api_key)
-    else:
-        provider = get_provider()
+    try:
+        if is_byok:
+            provider = get_provider(name=x_user_provider, api_key=x_user_api_key)
+        else:
+            provider = get_provider()
+    except ValueError as e:
+        logger.error("generate config_error rid=%s provider=%s err=%s", request_id, provider_name, e)
+        raise HTTPException(status_code=400, detail=f"{e} (request {request_id})")
     start = time.monotonic()
+
+    def log_failure(error: str, kind: str, status_code: int | None = None,
+                    model: str | None = None, attempts: int | None = None):
+        log_generation(
+            topic=request.topic,
+            grid_size=request.grid_size,
+            words_requested=request.word_count,
+            words_placed=0,
+            provider=provider_name,
+            duration_ms=int((time.monotonic() - start) * 1000),
+            error=error,
+            request_id=request_id,
+            model=model,
+            attempts=attempts,
+            error_kind=kind,
+            status_code=status_code,
+        )
 
     try:
         result = await provider.generate_words(
@@ -58,31 +98,36 @@ async def generate_crossword(
             count=request.word_count,
             max_length=request.grid_size,
         )
-    except Exception as e:
-        duration_ms = int((time.monotonic() - start) * 1000)
-        log_generation(
-            topic=request.topic,
-            grid_size=request.grid_size,
-            words_requested=request.word_count,
-            words_placed=0,
-            provider=settings.llm_provider,
-            duration_ms=duration_ms,
-            error=str(e),
+    except ProviderError as e:
+        logger.error("generate failed rid=%s %s", request_id, e)
+        log_failure(e.message, e.kind, e.status_code, e.model, e.attempts)
+        # 503 tells the client "try again shortly"; 502 means the upstream rejected the request.
+        http_status = 503 if e.retryable else 502
+        status = f" {e.status_code}" if e.status_code else ""
+        raise HTTPException(
+            status_code=http_status,
+            detail=(
+                f"LLM provider error ({e.provider}{status} {e.kind}, "
+                f"{e.attempts} attempt(s)): {e.message} [request {request_id}]"
+            ),
+            headers={"X-Request-ID": request_id},
         )
-        raise HTTPException(status_code=500, detail=f"LLM provider error: {e}")
+    except Exception as e:
+        logger.exception("generate crashed rid=%s", request_id)
+        log_failure(f"{type(e).__name__}: {e}", "internal")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal error: {type(e).__name__}: {e} [request {request_id}]",
+            headers={"X-Request-ID": request_id},
+        )
 
     if not result.words:
-        duration_ms = int((time.monotonic() - start) * 1000)
-        log_generation(
-            topic=request.topic,
-            grid_size=request.grid_size,
-            words_requested=request.word_count,
-            words_placed=0,
-            provider=settings.llm_provider,
-            duration_ms=duration_ms,
-            error="No words generated",
+        log_failure("No words generated", "no_words", model=result.model, attempts=result.attempts)
+        raise HTTPException(
+            status_code=500,
+            detail=f"No words generated [request {request_id}]",
+            headers={"X-Request-ID": request_id},
         )
-        raise HTTPException(status_code=500, detail="No words generated")
 
     clue_lookup = {wc.word: wc.clue for wc in result.words}
 
@@ -116,11 +161,19 @@ async def generate_crossword(
         grid_size=request.grid_size,
         words_requested=request.word_count,
         words_placed=len(gen.placed_words),
-        provider=settings.llm_provider,
+        provider=provider_name,
         duration_ms=duration_ms,
         prompt_tokens=result.prompt_tokens,
         completion_tokens=result.completion_tokens,
         total_tokens=result.total_tokens,
+        request_id=request_id,
+        model=result.model,
+        attempts=result.attempts,
+    )
+    logger.info(
+        "generate ok rid=%s provider=%s model=%s attempts=%d placed=%d/%d duration_ms=%d",
+        request_id, provider_name, result.model, result.attempts,
+        len(gen.placed_words), request.word_count, duration_ms,
     )
 
     response = GenerateResponse(
@@ -131,7 +184,7 @@ async def generate_crossword(
             grid_size=request.grid_size,
             words_placed=len(gen.placed_words),
             words_requested=request.word_count,
-            provider=settings.llm_provider,
+            provider=provider_name,
             grounded=result.grounded,
         ),
     )

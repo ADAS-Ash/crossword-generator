@@ -10,6 +10,14 @@ DB_PATH = Path(__file__).resolve().parent.parent / "data" / "analytics.db"
 
 _local = threading.local()
 
+_DIAGNOSTIC_COLUMNS = {
+    "request_id": "TEXT",
+    "model": "TEXT",
+    "attempts": "INTEGER",
+    "error_kind": "TEXT",
+    "status_code": "INTEGER",
+}
+
 
 def _get_conn() -> sqlite3.Connection:
     if not hasattr(_local, "conn"):
@@ -37,6 +45,11 @@ def _init_db(conn: sqlite3.Connection):
             error TEXT
         )
     """)
+    # Diagnostic columns added after the initial schema; ALTER keeps existing databases working.
+    existing = {row[1] for row in conn.execute("PRAGMA table_info(generations)")}
+    for col, ddl in _DIAGNOSTIC_COLUMNS.items():
+        if col not in existing:
+            conn.execute(f"ALTER TABLE generations ADD COLUMN {col} {ddl}")
     conn.execute("""
         CREATE INDEX IF NOT EXISTS idx_gen_created ON generations(created_at)
     """)
@@ -61,13 +74,19 @@ def log_generation(
     completion_tokens: int | None = None,
     total_tokens: int | None = None,
     error: str | None = None,
+    request_id: str | None = None,
+    model: str | None = None,
+    attempts: int | None = None,
+    error_kind: str | None = None,
+    status_code: int | None = None,
 ):
     conn = _get_conn()
     conn.execute(
         """INSERT INTO generations
            (created_at, topic, grid_size, words_requested, words_placed,
-            provider, duration_ms, prompt_tokens, completion_tokens, total_tokens, error)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            provider, duration_ms, prompt_tokens, completion_tokens, total_tokens, error,
+            request_id, model, attempts, error_kind, status_code)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             datetime.now(timezone.utc).isoformat(),
             topic,
@@ -80,6 +99,11 @@ def log_generation(
             completion_tokens,
             total_tokens,
             error,
+            request_id,
+            model,
+            attempts,
+            error_kind,
+            status_code,
         ),
     )
     conn.commit()
@@ -152,6 +176,25 @@ def get_stats() -> dict:
         "SELECT error, created_at FROM generations WHERE error IS NOT NULL ORDER BY id DESC LIMIT 1"
     ).fetchone()
 
+    error_breakdown = conn.execute(
+        """SELECT COALESCE(error_kind, 'legacy') as kind, status_code, provider, COUNT(*) as count
+           FROM generations
+           WHERE error IS NOT NULL AND created_at >= date('now', '-7 days')
+           GROUP BY kind, status_code, provider ORDER BY count DESC"""
+    ).fetchall()
+
+    recent_errors = conn.execute(
+        """SELECT created_at, request_id, provider, model, attempts, error_kind,
+                  status_code, duration_ms, error
+           FROM generations WHERE error IS NOT NULL ORDER BY id DESC LIMIT 20"""
+    ).fetchall()
+
+    # Successes that needed more than one attempt show how often retries are saving requests.
+    retried_ok = conn.execute(
+        """SELECT COUNT(*) as c FROM generations
+           WHERE error IS NULL AND attempts > 1 AND created_at >= date('now', '-7 days')"""
+    ).fetchone()["c"]
+
     recent = conn.execute(
         """SELECT topic, grid_size, words_placed, words_requested, duration_ms,
                   total_tokens, created_at
@@ -184,6 +227,14 @@ def get_stats() -> dict:
             "message": last_error["error"],
             "at": last_error["created_at"],
         } if last_error else None,
+        "reliability_7d": {
+            "succeeded_after_retry": retried_ok,
+            "errors": [
+                {"kind": r["kind"], "status": r["status_code"], "provider": r["provider"], "count": r["count"]}
+                for r in error_breakdown
+            ],
+        },
+        "recent_errors": [dict(r) for r in recent_errors],
         "recent": [
             {
                 "topic": r["topic"],
